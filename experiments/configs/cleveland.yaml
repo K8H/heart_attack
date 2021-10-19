@@ -1,0 +1,20 @@
+clev001 :
+  features:
+    - "age"
+    - "sex"
+    - "chest pain type"
+    - "resting bp s"
+    - "cholesterol"
+    - "fasting blood sugar"
+    - "resting ecg"
+    - "max heart rate"
+    - "exercise angina"
+    - "oldpeak"
+    - "ST slope"
+  target: 'target'
+  max_depth: 2
+
+  learning_rate: 0.01
+  batch_size: 100
+  activation: 'relu'
+

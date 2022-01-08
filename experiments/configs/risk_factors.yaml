@@ -1,6 +1,6 @@
 risk001 :
   features:
-    - "male"
+    - "sex"
     - "age"
     - "education"
     - "currentSmoker"

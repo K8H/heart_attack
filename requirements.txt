@@ -2,6 +2,7 @@ pandas~=1.2.4
 scikit-learn~=0.24.2
 PyYAML~=5.4.1
 matplotlib~=3.4.2
-numpy~=1.20.3
-shap~=0.39.0
+numba==0.54.0
+Numpy==1.20.0
+shap==0.40.0
 seaborn~=0.11.2

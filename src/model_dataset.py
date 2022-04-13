@@ -10,6 +10,7 @@ from sklearn.metrics import roc_curve, accuracy_score, plot_roc_curve
 
 import utils.constants as const
 from src.dataset import Dataset
+from src.utils.lib import if_not_mkdir
 from utils.ha_logging import Logger
 
 
@@ -19,7 +20,11 @@ class Module(object):
 
     def __init__(self, dataset_name, experiment_id):
         self.root_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent
-        self.logger = Logger(os.path.join(self.root_dir, f'results/logs/{dataset_name}_{experiment_id}')).logger
+        self.log_dir = os.path.join(self.root_dir, f'results/logs/{dataset_name}')
+        self.plot_dir = os.path.join(self.root_dir, f'results/plots/{dataset_name}')
+        if_not_mkdir(self.log_dir)
+        if_not_mkdir(self.plot_dir)
+        self.logger = Logger(os.path.join(self.log_dir, f'{experiment_id}')).logger
         self.dataset_name = dataset_name
         self.experiment_id = experiment_id
         self.data = None
@@ -78,7 +83,7 @@ class Module(object):
     def plot(self, dataset, clf, y_pred, sex):
         roc_auc = roc_curve(dataset.y_test.values, y_pred)
         plot_roc_curve(clf, dataset.X_test.values, dataset.y_test.values)
-        plt.savefig(f"../results/plots/{self.dataset_name}_{self.gender_sep}_roc_curve.png",
+        plt.savefig(os.path.join(self.plot_dir, f"{self.gender_sep}_roc_curve.png"),
                     bbox_inches='tight',
                     pad_inches=0)   # TPDP maybe for man instead pad_inches -> dpi=600
 
@@ -87,14 +92,13 @@ class Module(object):
         shap_values = explainer.shap_values(dataset.X_train)
 
         shap.summary_plot(shap_values[0], dataset.X_train, max_display=5, show=False)
-        plt.savefig(f"../results/plots/{self.dataset_name}_{self.gender_sep}_shap_summary.png",
+        plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_shap_summary.png'),
                     bbox_inches='tight',
                     pad_inches=0)
 
         f, ax = plt.subplots(figsize=(15, 15))
         sns.heatmap(dataset.X.corr(), annot=True, linewidths=.5, fmt='.1f', ax=ax)
-        plt.savefig(os.path.join(self.root_dir,
-                                 f"results/plots/{self.dataset_name}_{self.gender_sep}_heatmap_features.png"),
+        plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_heatmap_features.png'),
                     bbox_inches='tight', dpi=600)
         plt.close(f)
 
@@ -102,15 +106,13 @@ class Module(object):
             X_train_cat = dataset.X_train.copy()
             X_train_cat['sex'] = X_train_cat['sex'].replace({0: 'female', 1: 'male'})
             shap.dependence_plot("sex", shap_values[0], X_train_cat, show=False)
-            plt.savefig(os.path.join(self.root_dir,
-                                     f"results/plots/{self.dataset_name}_{self.gender_sep}_shap_dependence_plot.png"),
+            plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_shap_dependence_plot.png'),
                         bbox_inches='tight', dpi=600)
 
             glabel_feat = "Demographic parity difference\nof model output for female vs. male\nby feature"
             shap.group_difference_plot(shap_values[0], sex, dataset.X_train.columns, xmin=self.xmin, xmax=self.xmax,
                                        xlabel=glabel_feat, show=False)
-            plt.savefig(os.path.join(self.root_dir,
-                                     f"results/plots/{self.dataset_name}_{self.gender_sep}_shap_group_diff_plot.png"),
+            plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_shap_group_diff_plot.png'),
                         bbox_inches='tight', dpi=600)
 
             self.statistics(dataset)
@@ -119,15 +121,13 @@ class Module(object):
             glabel_feat = "Demographic parity difference\nof model output for female vs. male\nby feature"
             shap.group_difference_plot(shap_values[0], sex, dataset.X_train.columns, xmin=self.xmin, xmax=self.xmax,
                                        xlabel=glabel_feat, show=False)
-            plt.savefig(os.path.join(self.root_dir,
-                                     f"results/plots/{self.dataset_name}_{self.gender_sep}_shap_group_diff_plot_features.png"),
+            plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_shap_group_diff_plot_features.png'),
                         bbox_inches='tight', dpi=600)
 
             glabel = "Demographic parity difference\nof model output for female vs. male"
             shap.group_difference_plot(shap_values[0].sum(1), sex, xmin=self.xmin, xmax=self.xmax, xlabel=glabel,
                                        show=False)
-            plt.savefig(os.path.join(self.root_dir,
-                                     f"results/plots/{self.dataset_name}_{self.gender_sep}_shap_group_diff_plot.png"),
+            plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_shap_group_diff_plot.png'),
                         bbox_inches='tight', dpi=600)
 
     def statistics(self, dataset):
@@ -145,8 +145,7 @@ class Module(object):
         ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
         ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         plt.title("% Men & Women", bbox={'facecolor': '0.8', 'pad': 5})
-        plt.savefig(os.path.join(self.root_dir,
-                                 f"results/plots/{self.dataset_name}_{self.gender_sep}_female_male_piechart.png"),
+        plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_female_male_piechart.png'),
                     bbox_inches='tight', dpi=600)
 
         AM = dataset.X[['age', 'sex']][
@@ -160,8 +159,7 @@ class Module(object):
         ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
         ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         plt.title("%Woman in hypotese age ", bbox={'facecolor': '0.8', 'pad': 5})
-        plt.savefig(os.path.join(self.root_dir,
-                                 f"results/plots/{self.dataset_name}_{self.gender_sep}_female_age_piechart.png"),
+        plt.savefig(os.path.join(self.plot_dir, f'{self.gender_sep}_female_age_piechart.png'),
                     bbox_inches='tight', dpi=600)
 
 
